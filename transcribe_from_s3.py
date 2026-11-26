@@ -46,11 +46,14 @@ headers = {
 }
 
 
-# Wait until the transcription has been completed and then print the result
+# Wait until the transcription succeeds or fails
 get_endpoint = upload_endpoint + "/" + post_response.json()['id']
-get_response = requests.get(get_endpoint, headers=headers)
-while get_response.json()['status'] != 'completed':
-  get_response = requests.get(get_endpoint, headers=headers)
-  time.sleep(5)
+transcript = requests.get(get_endpoint, headers=headers).json()
+while transcript['status'] not in ('completed', 'error'):
+    time.sleep(5)
+    transcript = requests.get(get_endpoint, headers=headers).json()
 
-print(get_response.json()['text'])
+if transcript['status'] == 'error':
+    raise SystemExit(f"Transcription failed: {transcript['error']}")
+
+print(transcript['text'])
